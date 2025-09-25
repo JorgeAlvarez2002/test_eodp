@@ -119,7 +119,7 @@ class opticalPhase(initIsm):
         # wv in [um]
         toa = np.zeros((sgm_toa.shape[0], sgm_toa.shape[1]))
         isrf, wv_isrf = readIsrf(self.auxdir + '/' + self.ismConfig.isrffile, band)
-        wv_isrf = wv_isrf *1000
+        wv_isrf = wv_isrf *1000 #pasar a nm
         norm_isrf = isrf / np.sum(isrf)
         print(norm_isrf)
 
