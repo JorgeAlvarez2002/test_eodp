@@ -1,4 +1,3 @@
-
 from ism.src.initIsm import initIsm
 from math import pi
 from ism.src.mtf import mtf
@@ -50,7 +49,7 @@ class opticalPhase(initIsm):
 
         # Spatial filter
         # -------------------------------------------------------------------------------
-        # Calculation and application of the system MTF
+        # Calculation and application of the system MTF SPECTRAL BEHAVIOUR
         self.logger.info("EODP-ALG-ISM-1030: Spatial modelling. PSF/MTF")
         myMtf = mtf(self.logger, self.outdir)
         Hsys = myMtf.system_mtf(toa.shape[0], toa.shape[1],
@@ -115,6 +114,23 @@ class opticalPhase(initIsm):
         :return: TOA image 2D in radiances [mW/m2]
         """
         # TODO
+        # Read the ISRF and normalise it with its integral
+        # ------------------------------------------------------------
+        # wv in [um]
+        toa = np.zeros((sgm_toa.shape[0], sgm_toa.shape[1]))
+        isrf, wv_isrf = readIsrf(self.auxdir + '/' + self.ismConfig.isrffile, band)
+        wv_isrf = wv_isrf *1000
+        norm_isrf = isrf / np.sum(isrf)
+        print(norm_isrf)
+
+        # Apply the filter
+        for ialt in range(sgm_toa.shape[0]):
+            for iact in range(sgm_toa.shape[1]):
+                cs = interp1d(sgm_wv, sgm_toa[ialt, iact, :], fill_value=(0, 0), bounds_error=False)
+                toa_i = cs(wv_isrf)  # interpolated toa
+                toa[ialt, iact] = np.sum(toa_i * norm_isrf)
+        return toa
+
         return toa
 
 
