@@ -92,6 +92,8 @@ class opticalPhase(initIsm):
         :return: TOA image in irradiances [mW/m2]
         """
         # TODO
+        #pasar de radiancia a irradiancia
+        toa=toa*Tr*(np.pi/4) * (D / f)**2
         return toa
 
 
@@ -131,6 +133,5 @@ class opticalPhase(initIsm):
                 toa[ialt, iact] = np.sum(toa_i * norm_isrf)
         return toa
 
-        return toa
 
 
