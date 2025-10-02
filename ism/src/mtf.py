@@ -121,6 +121,7 @@ class mtf:
         :return: diffraction MTF
         """
         #TODO
+        Hdiff=1-fr2D #diffraction MTF
         return Hdiff
 
 
