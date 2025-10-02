@@ -121,7 +121,7 @@ class mtf:
         :return: diffraction MTF
         """
         #TODO
-        Hdiff=1-fr2D #diffraction MTF
+        Hdiff=(2/np.pi)*(np.arccos(fr2D)-(fr2D)*(1-(fr2D)**2)**(0.5)) #diffraction MTF
         return Hdiff
 
 
@@ -135,7 +135,9 @@ class mtf:
         :return: Defocus MTF
         """
         #TODO
-        return Hdefoc
+        x=np.pi*defocus*fr2D*(1-fr2D)
+        Hdefoc=2*j1(x)/x
+        return Hdefoc #una matriz
 
     def mtfWfeAberrations(self, fr2D, lambd, kLF, wLF, kHF, wHF):
         """
@@ -149,6 +151,7 @@ class mtf:
         :return: WFE Aberrations MTF
         """
         #TODO
+        Hwfe=np.exp(-fr2D*(1-fr2D)*(kLF*(wLF/lambd)**2+kHF*(wHF/lambd)**2))
         return Hwfe
 
     def mtfDetector(self,fn2D):
