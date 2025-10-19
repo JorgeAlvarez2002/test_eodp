@@ -82,7 +82,7 @@ def check_bands(bands, base_paths):
         l1b = readToa(base_paths["eq_true"], f"l1b_toa_{band}.nc")
         l1b_ref = readToa(base_paths["original"], f"l1b_toa_{band}.nc")
         threshold, ok = diff_band(l1b, l1b_ref)
-        print(f"{band}: μ+3σ = {threshold:.6f}%  -> {'✅ CUMPLE' if ok else '❌ NO CUMPLE'}")
+        print(f"{band}: μ+3σ = {threshold:.6f}%  -> {'CUMPLE' if ok else 'NO CUMPLE'}")
 
 
 def main():

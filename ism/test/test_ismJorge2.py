@@ -46,11 +46,11 @@ def diff_band(l1b_toa, toa_ref):
 
 
 def check_bands_against_isrf(bands, base_paths):
-    """Comprueba μ + 3σ < 0.01% con respecto a TOA after ISRF"""
-    print("=== COMPROBACIÓN μ+3σ < 0.01% vs ISRF ===")
+    """Comprueba μ + 3σ < 0.01% con respecto a TOA"""
+    print("=== COMPROBACIÓN μ+3σ < 0.01% vs OPTICAL ===")
     for band in bands:
-        toa_isrf = to_1d_spectrum(readToa(base_paths["isrf"], f"ism_toa_isrf_{band}.nc"))
-        toa_referencia = to_1d_spectrum(readToa(base_paths["referencia"], f"ism_toa_isrf_{band}.nc"))
+        toa_isrf = to_1d_spectrum(readToa(base_paths["optical"], f"ism_toa_optical_{band}.nc"))
+        toa_referencia = to_1d_spectrum(readToa(base_paths["referencia"], f"ism_toa_optical_{band}.nc"))
         threshold, ok = diff_band(toa_referencia, toa_isrf)
         print(f"{band}: μ+3σ = {threshold:.6f}%  -> {'CUMPLE' if ok else 'NO CUMPLE'}")
 
@@ -58,7 +58,7 @@ def check_bands_against_isrf(bands, base_paths):
 def main():
     bands = ["VNIR-0", "VNIR-1", "VNIR-2", "VNIR-3"]
     base_paths = {
-        "isrf": Path(r"C:\Users\jorge\PycharmProjects\EOPD\EODP-TS-ISM\jorgeoutputs"),
+        "optical": Path(r"C:\Users\jorge\PycharmProjects\EOPD\EODP-TS-ISM\jorgeoutputs"),
         "referencia": Path(r"C:\Users\jorge\PycharmProjects\EOPD\EODP-TS-ISM\output")
     }
 
