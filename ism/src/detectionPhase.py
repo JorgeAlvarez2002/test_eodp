@@ -123,6 +123,8 @@ class detectionPhase(initIsm):
         #TODO
         toae=toa*QE
         print("Paso por aquí")
+        fwc=self.ismConfig.FWC
+        toae=np.minimum(toae,fwc)
         return toae
 
     def badDeadPixels(self, toa,bad_pix,dead_pix,bad_pix_red,dead_pix_red):
