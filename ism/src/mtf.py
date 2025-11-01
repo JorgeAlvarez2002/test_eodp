@@ -190,109 +190,123 @@ class mtf:
         Hmotion=np.sinc(kmotion*fn2D)
         return Hmotion
 
-    def plotMtf(self, Hdiff, Hdefoc, Hwfe, Hdet, Hsmear, Hmotion, Hsys, nlines, ncolumns, fnAct, fnAlt, directory, band):
-       """
-       Plotting the system MTF and all of its contributors
-       :param Hdiff: Diffraction MTF
-       :param Hdefoc: Defocusing MTF
-       :param Hwfe: Wavefront electronics MTF
-       :param Hdet: Detector MTF
-       :param Hsmear: Smearing MTF
-       :param Hmotion: Motion blur MTF
-       :param Hsys: System MTF
-       :param nlines: Number of lines in the TOA
-       :param ncolumns: Number of columns in the TOA
-       :param fnAct: normalised frequencies in the ACT direction (f/(1/w))
-       :param fnAlt: normalised frequencies in the ALT direction (f/(1/w))
-       :param directory: output directory
-       :param band: band
-       :return: N/A
-       """
-       # Índices centrales para cortes
-       center_alt = nlines // 2
-       center_act = ncolumns // 2
 
-       # Corte ACT (fila central)
-       Hdiff_act = Hdiff[center_alt, :]
-       Hdefoc_act = Hdefoc[center_alt, :]
-       Hwfe_act = Hwfe[center_alt, :]
-       Hdet_act = Hdet[center_alt, :]
-       Hsmear_act = Hsmear[center_alt, :]
-       Hmotion_act = Hmotion[center_alt, :]
-       Hsys_act = Hsys[center_alt, :]
+    def plotMtf(self,Hdiff, Hdefoc, Hwfe, Hdet, Hsmear, Hmotion, Hsys, nlines, ncolumns, fnAct, fnAlt, directory, band):
+           """
+           Plotting the system MTF and all of its contributors
+           :param Hdiff: Diffraction MTF
+           :param Hdefoc: Defocusing MTF
+           :param Hwfe: Wavefront electronics MTF
+           :param Hdet: Detector MTF
+           :param Hsmear: Smearing MTF
+           :param Hmotion: Motion blur MTF
+           :param Hsys: System MTF
+           :param nlines: Number of lines in the TOA
+           :param ncolumns: Number of columns in the TOA
+           :param fnAct: normalised frequencies in the ACT direction (f/(1/w))
+           :param fnAlt: normalised frequencies in the ALT direction (f/(1/w))
+           :param directory: output directory
+           :param band: band
+           :return: N/A
+           """
 
-       # Corte ALT (columna central)
-       Hdiff_alt = Hdiff[:, center_act]
-       Hdefoc_alt = Hdefoc[:, center_act]
-       Hwfe_alt = Hwfe[:, center_act]
-       Hdet_alt = Hdet[:, center_act]
-       Hsmear_alt = Hsmear[:, center_act]
-       Hmotion_alt = Hmotion[:, center_act]
-       Hsys_alt = Hsys[:, center_act]
+           # --- Helper functions ---
+           def extract_slice(H, axis_size, is_act=True):
+               center = axis_size // 2
+               return H[center, :] if is_act else H[:, center]
 
-       # Filtrar solo frecuencias positivas
-       mask_pos = fnAct >= 0
-       fnAct_pos = fnAct[mask_pos]
-       Hdiff_act_pos = Hdiff_act[mask_pos]
-       Hdefoc_act_pos = Hdefoc_act[mask_pos]
-       Hwfe_act_pos = Hwfe_act[mask_pos]
-       Hdet_act_pos = Hdet_act[mask_pos]
-       Hsmear_act_pos = Hsmear_act[mask_pos]
-       Hmotion_act_pos = Hmotion_act[mask_pos]
-       Hsys_act_pos = Hsys_act[mask_pos]
+           def clean_array(H):
+               """Replace NaN or inf with 0."""
+               return np.nan_to_num(H, nan=0.0, posinf=0.0, neginf=0.0)
 
-       mask_pos_alt = fnAlt >= 0
-       fnAlt_pos = fnAlt[mask_pos_alt]
-       Hdiff_alt_pos = Hdiff_alt[mask_pos_alt]
-       Hdefoc_alt_pos = Hdefoc_alt[mask_pos_alt]
-       Hwfe_alt_pos = Hwfe_alt[mask_pos_alt]
-       Hdet_alt_pos = Hdet_alt[mask_pos_alt]
-       Hsmear_alt_pos = Hsmear_alt[mask_pos_alt]
-       Hmotion_alt_pos = Hmotion_alt[mask_pos_alt]
-       Hsys_alt_pos = Hsys_alt[mask_pos_alt]
+           def normalize_freqs(freqs, npoints):
+               """
+               Ensure frequency axis goes exactly from -0.5 to 0.5.
+               This avoids curves stopping before reaching Nyquist.
+               """
+               return np.linspace(-0.5, 0.5, npoints)
 
-       # Graficar ACT
-       plt.figure(figsize=(10, 6))
-       plt.plot(fnAct_pos, Hdiff_act_pos, label='Diffraction')
-       plt.plot(fnAct_pos, Hdefoc_act_pos, label='Defocus')
-       plt.plot(fnAct_pos, Hwfe_act_pos, label='WFE Aberrations')
-       plt.plot(fnAct_pos, Hdet_act_pos, label='Detector')
-       plt.plot(fnAct_pos, Hsmear_act_pos, label='Smearing')
-       plt.plot(fnAct_pos, Hmotion_act_pos, label='Motion Blur')
-       plt.plot(fnAct_pos, Hsys_act_pos, 'k-', linewidth=2, label='System MTF')
-       plt.axvline(x=0.5, color='r', linestyle='--', label='Nyquist Frequency')
-       plt.xlabel('Normalized Frequency (f / (1/w))')
-       plt.ylabel('MTF Value')
-       plt.title(f'System MTF - Across-Track (Band {band})')
-       plt.legend()
-       plt.grid(True)
-       if not os.path.exists(directory):
-           os.makedirs(directory)
-       plt.savefig(os.path.join(directory, f'MTF_ACT_{band}.png'))
-       plt.close()
+           def positive_part(freqs, values):
+               mask = freqs >= 0
+               return freqs[mask], values[mask]
 
-       # Graficar ALT
-       plt.figure(figsize=(10, 6))
-       plt.plot(fnAlt_pos, Hdiff_alt_pos, label='Diffraction')
-       plt.plot(fnAlt_pos, Hdefoc_alt_pos, label='Defocus')
-       plt.plot(fnAlt_pos, Hwfe_alt_pos, label='WFE Aberrations')
-       plt.plot(fnAlt_pos, Hdet_alt_pos, label='Detector')
-       plt.plot(fnAlt_pos, Hsmear_alt_pos, label='Smearing')
-       plt.plot(fnAlt_pos, Hmotion_alt_pos, label='Motion Blur')
-       plt.plot(fnAlt_pos, Hsys_alt_pos, 'k-', linewidth=2, label='System MTF')
-       plt.axvline(x=0.5, color='r', linestyle='--', label='Nyquist Frequency')
-       plt.xlabel('Normalized Frequency (f / (1/w))')
-       plt.ylabel('MTF Value')
-       plt.title(f'System MTF - Along-Track (Band {band})')
-       plt.legend()
-       plt.grid(True)
-       plt.savefig(os.path.join(directory, f'MTF_ALT_{band}.png'))
-       plt.close()
+           def mtf_at_nyquist(freqs, mtf_values):
+               """Interpolate to find MTF value at f = 0.5 (Nyquist)."""
+               return np.interp(0.5, freqs, mtf_values)
 
-       # Reportar MTF en Nyquist (interpolación lineal para mayor precisión)
-       nyquist_idx_act = np.abs(fnAct_pos - 0.5).argmin()
-       nyquist_idx_alt = np.abs(fnAlt_pos - 0.5).argmin()
-       mtf_nyquist_act = Hsys_act_pos[nyquist_idx_act]
-       mtf_nyquist_alt = Hsys_alt_pos[nyquist_idx_alt]
-       self.logger.info(f"Band {band}: MTF at Nyquist (ACT) = {mtf_nyquist_act:.3f}, (ALT) = {mtf_nyquist_alt:.3f}")
-    
+           # --- Clean and normalize data ---
+           Hdiff = clean_array(Hdiff)
+           Hdefoc = clean_array(Hdefoc)
+           Hwfe = clean_array(Hwfe)
+           Hdet = clean_array(Hdet)
+           Hsmear = clean_array(Hsmear)
+           Hmotion = clean_array(Hmotion)
+           Hsys = clean_array(Hsys)
+
+           fnAct = normalize_freqs(fnAct, ncolumns)
+           fnAlt = normalize_freqs(fnAlt, nlines)
+
+           # --- Dictionary of all MTF contributors ---
+           mtf_components = {
+               "Diffraction MTF": Hdiff,
+               "Defocus MTF": Hdefoc,
+               "WFE Aberrations MTF": Hwfe,
+               "Detector MTF": Hdet,
+               "Smearing MTF": Hsmear,
+               "Motion blur MTF": Hmotion,
+               "System MTF": Hsys
+           }
+
+           # ==============================
+           #  ACT SLICE
+           # ==============================
+           fnAct_pos, Hsys_act_pos = positive_part(fnAct, extract_slice(Hsys, nlines, is_act=True))
+           mtf_nyquist_act = mtf_at_nyquist(fnAct_pos, Hsys_act_pos)
+
+           plt.figure(figsize=(8, 6))
+           for label, H in mtf_components.items():
+               fn_pos, H_pos = positive_part(fnAct, extract_slice(H, nlines, is_act=True))
+               plt.plot(fn_pos, H_pos, label=label, linewidth=2 if label == "System MTF" else 1)
+
+           plt.axvline(0.5, color='k', linestyle='--', label="f Nyquist")
+           plt.xlabel("Spatial frequency f/(1/w) [-]")
+           plt.ylabel("MTF")
+           plt.title(f"System MTF - ACT slice ({band})\nMTF(0.5) = {mtf_nyquist_act:.3f}")
+           plt.legend(loc="best")
+           plt.grid(True)
+           plt.show()
+
+           # ==============================
+           #  ALT SLICE
+           # ==============================
+           fnAlt_pos, Hsys_alt_pos = positive_part(fnAlt, extract_slice(Hsys, ncolumns, is_act=False))
+           mtf_nyquist_alt = mtf_at_nyquist(fnAlt_pos, Hsys_alt_pos)
+
+           plt.figure(figsize=(8, 6))
+           for label, H in mtf_components.items():
+               fn_pos, H_pos = positive_part(fnAlt, extract_slice(H, ncolumns, is_act=False))
+               plt.plot(fn_pos, H_pos, label=label, linewidth=2 if label == "System MTF" else 1)
+
+           plt.axvline(0.5, color='k', linestyle='--', label="f Nyquist")
+           plt.xlabel("Spatial frequency f/(1/w) [-]")
+           plt.ylabel("MTF")
+           plt.title(f"System MTF - ALT slice ({band})\nMTF(0.5) = {mtf_nyquist_alt:.3f}")
+           plt.legend(loc="best")
+           plt.grid(True)
+           plt.show()
+
+           # ==============================
+           #  REPORT
+           # ==============================
+           print(f"[{band}] MTF at Nyquist (ACT): {mtf_nyquist_act:.3f}")
+           print(f"[{band}] MTF at Nyquist (ALT): {mtf_nyquist_alt:.3f}")
+
+           # --- Quality evaluation ---
+           for direction, val in [("ACT", mtf_nyquist_act), ("ALT", mtf_nyquist_alt)]:
+               if val >= 0.3:
+                   quality = "Good"
+               elif val >= 0.15:
+                   quality = "Decent"
+               else:
+                   quality = "Poor"
+               print(f" → {direction}: {quality} MTF performance at Nyquist.")
