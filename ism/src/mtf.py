@@ -295,4 +295,4 @@ class mtf:
        mtf_nyquist_act = Hsys_act_pos[nyquist_idx_act]
        mtf_nyquist_alt = Hsys_alt_pos[nyquist_idx_alt]
        self.logger.info(f"Band {band}: MTF at Nyquist (ACT) = {mtf_nyquist_act:.3f}, (ALT) = {mtf_nyquist_alt:.3f}")
-
+    
